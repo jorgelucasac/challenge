@@ -1,5 +1,6 @@
 using Ambev.DeveloperEvaluation.Common.Validation;
 using Ambev.DeveloperEvaluation.Domain.Common;
+using Ambev.DeveloperEvaluation.Domain.Services;
 using Ambev.DeveloperEvaluation.Domain.Validation;
 
 namespace Ambev.DeveloperEvaluation.Domain.Entities;
@@ -9,6 +10,8 @@ namespace Ambev.DeveloperEvaluation.Domain.Entities;
 /// </summary>
 public class SaleItem : BaseEntity
 {
+    private static readonly ISaleItemDiscountPolicy DiscountPolicy = new TieredSaleItemDiscountPolicy();
+
     public Guid SaleId { get; private set; }
     public string ProductExternalId { get; private set; } = string.Empty;
     public string ProductName { get; private set; } = string.Empty;
@@ -67,12 +70,12 @@ public class SaleItem : BaseEntity
 
     private void Recalculate()
     {
-        EnsureBusinessRules();
+        EnsureRequiredFields();
 
-        var grossAmount = Quantity * UnitPrice;
-        DiscountPercent = ResolveDiscountPercent(Quantity);
-        DiscountAmount = grossAmount * (DiscountPercent / 100m);
-        TotalAmount = grossAmount - DiscountAmount;
+        var pricing = DiscountPolicy.Calculate(Quantity, UnitPrice);
+        DiscountPercent = pricing.DiscountPercent;
+        DiscountAmount = pricing.DiscountAmount;
+        TotalAmount = pricing.TotalAmount;
 
         if (IsCancelled)
         {
@@ -81,23 +84,8 @@ public class SaleItem : BaseEntity
         }
     }
 
-    private void EnsureBusinessRules()
+    private void EnsureRequiredFields()
     {
-        if (Quantity <= 0)
-        {
-            throw new DomainException("Item quantity must be greater than zero.");
-        }
-
-        if (UnitPrice <= 0)
-        {
-            throw new DomainException("Item unit price must be greater than zero.");
-        }
-
-        if (Quantity > 20)
-        {
-            throw new DomainException("It is not possible to sell more than 20 identical items.");
-        }
-
         if (string.IsNullOrWhiteSpace(ProductExternalId))
         {
             throw new DomainException("Product external id is required.");
@@ -107,20 +95,5 @@ public class SaleItem : BaseEntity
         {
             throw new DomainException("Product name is required.");
         }
-    }
-
-    private static decimal ResolveDiscountPercent(int quantity)
-    {
-        if (quantity >= 10)
-        {
-            return 20m;
-        }
-
-        if (quantity >= 4)
-        {
-            return 10m;
-        }
-
-        return 0m;
     }
 }

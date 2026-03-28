@@ -1,0 +1,13 @@
+namespace Ambev.DeveloperEvaluation.Domain.Events;
+
+public class SaleModifiedEvent
+{
+    public Guid SaleId { get; }
+    public string SaleNumber { get; }
+
+    public SaleModifiedEvent(Guid saleId, string saleNumber)
+    {
+        SaleId = saleId;
+        SaleNumber = saleNumber;
+    }
+}

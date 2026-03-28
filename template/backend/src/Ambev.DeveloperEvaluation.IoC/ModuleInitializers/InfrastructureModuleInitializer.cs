@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Ambev.DeveloperEvaluation.IoC.ModuleInitializers;
 
@@ -12,7 +14,34 @@ public class InfrastructureModuleInitializer : IModuleInitializer
 {
     public void Initialize(WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<DefaultContext>());
+        AddDataBase(builder);
+        AddRepositories(builder);
+    }
+
+    private static void AddDataBase(WebApplicationBuilder builder)
+    {
+        builder.Services.AddDbContext<DefaultContext>(options =>
+        {
+            options.UseNpgsql(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                b =>
+                {
+                    b.EnableRetryOnFailure();
+                    b.MigrationsAssembly("Ambev.DeveloperEvaluation.ORM");
+                }
+            );
+
+            if (builder.Environment.IsDevelopment())
+            {
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
+                options.LogTo(Console.WriteLine, LogLevel.Information);
+            }
+        });
+    }
+
+    private static void AddRepositories(WebApplicationBuilder builder)
+    {
         builder.Services.AddScoped<IUserRepository, UserRepository>();
     }
 }

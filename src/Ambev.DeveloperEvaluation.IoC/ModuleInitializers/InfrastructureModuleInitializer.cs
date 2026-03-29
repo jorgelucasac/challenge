@@ -1,4 +1,5 @@
-﻿using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
+using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Ambev.DeveloperEvaluation.ORM;
 using Ambev.DeveloperEvaluation.ORM.Repositories;
 using Microsoft.AspNetCore.Builder;
@@ -42,6 +43,8 @@ public class InfrastructureModuleInitializer : IModuleInitializer
 
     private static void AddRepositories(WebApplicationBuilder builder)
     {
+        builder.Services.AddSingleton<ISaleNumberGenerator, DefaultSaleNumberGenerator>();
+        builder.Services.AddScoped<ISaleRepository, SaleRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
     }
 }

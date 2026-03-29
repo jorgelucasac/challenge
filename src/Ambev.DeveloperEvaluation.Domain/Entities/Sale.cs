@@ -74,12 +74,8 @@ public class Sale : BaseEntity
         }
 
         sale.RecalculateTotals();
+        sale.AddDomainEvent(new SaleCreatedEvent(sale.Id, sale.SaleNumber));
         return sale;
-    }
-
-    public SaleCreatedEvent CreateCreatedEvent()
-    {
-        return new SaleCreatedEvent(Id, SaleNumber);
     }
 
     public void UpdateDetails(
@@ -99,7 +95,7 @@ public class Sale : BaseEntity
         Touch();
     }
 
-    public SaleModifiedEvent AddItem(
+    public void AddItem(
         string productExternalId,
         string productName,
         int quantity,
@@ -111,11 +107,9 @@ public class Sale : BaseEntity
         _items.Add(item);
         Touch();
         RecalculateTotals();
-
-        return new SaleModifiedEvent(Id, SaleNumber);
     }
 
-    public SaleModifiedEvent UpdateItem(
+    public void UpdateItem(
         Guid itemId,
         int quantity,
         decimal unitPrice,
@@ -133,27 +127,29 @@ public class Sale : BaseEntity
         item.Update(quantity, unitPrice, productName, productExternalId);
         Touch();
         RecalculateTotals();
-
-        return new SaleModifiedEvent(Id, SaleNumber);
     }
 
-    public ItemCancelledEvent CancelItem(Guid itemId)
+    public void CancelItem(Guid itemId)
     {
         EnsureSaleIsActive();
 
         var item = GetItem(itemId);
+        var wasCancelled = item.IsCancelled;
         item.Cancel();
         Touch();
         RecalculateTotals();
 
-        return new ItemCancelledEvent(Id, itemId, SaleNumber);
+        if (!wasCancelled)
+        {
+            AddDomainEvent(new ItemCancelledEvent(Id, itemId, SaleNumber));
+        }
     }
 
-    public SaleCancelledEvent Cancel()
+    public void Cancel()
     {
         if (IsCancelled)
         {
-            return new SaleCancelledEvent(Id, SaleNumber);
+            return;
         }
 
         foreach (var item in _items.Where(i => !i.IsCancelled))
@@ -164,15 +160,14 @@ public class Sale : BaseEntity
         IsCancelled = true;
         Touch();
         RecalculateTotals();
-
-        return new SaleCancelledEvent(Id, SaleNumber);
+        AddDomainEvent(new SaleCancelledEvent(Id, SaleNumber));
     }
 
-    public SaleModifiedEvent Activate()
+    public void Activate()
     {
         if (!IsCancelled)
         {
-            return new SaleModifiedEvent(Id, SaleNumber);
+            return;
         }
 
         IsCancelled = false;
@@ -184,8 +179,7 @@ public class Sale : BaseEntity
 
         Touch();
         RecalculateTotals();
-
-        return new SaleModifiedEvent(Id, SaleNumber);
+        MarkAsModified();
     }
 
     public void RecalculateTotals()
@@ -207,6 +201,14 @@ public class Sale : BaseEntity
         var result = validator.Validate(this);
 
         return new ValidationResultDetail(result);
+    }
+
+    public void MarkAsModified()
+    {
+        if (!HasDomainEvent<SaleModifiedEvent>())
+        {
+            AddDomainEvent(new SaleModifiedEvent(Id, SaleNumber));
+        }
     }
 
     private SaleItem GetItem(Guid itemId)

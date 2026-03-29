@@ -1,6 +1,8 @@
+using MediatR;
+
 namespace Ambev.DeveloperEvaluation.Domain.Events;
 
-public class SaleModifiedEvent
+public class SaleModifiedEvent : INotification
 {
     public Guid SaleId { get; }
     public string SaleNumber { get; }

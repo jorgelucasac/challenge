@@ -29,6 +29,13 @@ public class SaleRepository : ISaleRepository
             .FirstOrDefaultAsync(sale => sale.Id == id, cancellationToken);
     }
 
+    public async Task<Sale?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Sales
+            .Include(sale => sale.Items)
+            .FirstOrDefaultAsync(sale => sale.Id == id, cancellationToken);
+    }
+
     public async Task<PagedResult<Sale>> ListAsync(ListSalesFilter filter, CancellationToken cancellationToken = default)
     {
         var query = _context.Sales.AsNoTracking();
@@ -88,5 +95,11 @@ public class SaleRepository : ISaleRepository
             .ToListAsync(cancellationToken);
 
         return new PagedResult<Sale>(items, filter.Page, filter.Size, totalCount);
+    }
+
+    public async Task<Sale> UpdateAsync(Sale sale, CancellationToken cancellationToken = default)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+        return sale;
     }
 }

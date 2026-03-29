@@ -1,4 +1,5 @@
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Common;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,5 +27,66 @@ public class SaleRepository : ISaleRepository
             .AsNoTracking()
             .Include(sale => sale.Items)
             .FirstOrDefaultAsync(sale => sale.Id == id, cancellationToken);
+    }
+
+    public async Task<PagedResult<Sale>> ListAsync(ListSalesFilter filter, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Sales.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter.SaleNumber))
+        {
+            query = query.Where(sale =>
+                EF.Functions.ILike(sale.SaleNumber, $"%{filter.SaleNumber}%"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.CustomerName))
+        {
+            query = query.Where(sale =>
+                EF.Functions.ILike(sale.CustomerName, $"%{filter.CustomerName}%"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.BranchName))
+        {
+            query = query.Where(sale =>
+                EF.Functions.ILike(sale.BranchName, $"%{filter.BranchName}%"));
+        }
+
+        if (filter.IsCancelled.HasValue)
+        {
+            query = query.Where(sale => sale.IsCancelled == filter.IsCancelled.Value);
+        }
+
+        if (filter.SaleDateFrom.HasValue)
+        {
+            query = query.Where(sale => sale.SaleDate >= filter.SaleDateFrom.Value);
+        }
+
+        if (filter.SaleDateTo.HasValue)
+        {
+            query = query.Where(sale => sale.SaleDate <= filter.SaleDateTo.Value);
+        }
+
+        query = filter.Order switch
+        {
+            SaleSortOrder.SaleDateAscending => query.OrderBy(sale => sale.SaleDate),
+            SaleSortOrder.SaleDateDescending => query.OrderByDescending(sale => sale.SaleDate),
+            SaleSortOrder.SaleNumberAscending => query.OrderBy(sale => sale.SaleNumber),
+            SaleSortOrder.SaleNumberDescending => query.OrderByDescending(sale => sale.SaleNumber),
+            SaleSortOrder.CustomerNameAscending => query.OrderBy(sale => sale.CustomerName),
+            SaleSortOrder.CustomerNameDescending => query.OrderByDescending(sale => sale.CustomerName),
+            SaleSortOrder.BranchNameAscending => query.OrderBy(sale => sale.BranchName),
+            SaleSortOrder.BranchNameDescending => query.OrderByDescending(sale => sale.BranchName),
+            SaleSortOrder.TotalAmountAscending => query.OrderBy(sale => sale.TotalAmount),
+            SaleSortOrder.TotalAmountDescending => query.OrderByDescending(sale => sale.TotalAmount),
+            _ => query.OrderByDescending(sale => sale.SaleDate)
+        };
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((filter.Page - 1) * filter.Size)
+            .Take(filter.Size)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Sale>(items, filter.Page, filter.Size, totalCount);
     }
 }

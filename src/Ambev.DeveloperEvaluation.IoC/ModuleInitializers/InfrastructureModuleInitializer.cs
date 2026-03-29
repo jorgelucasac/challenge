@@ -1,6 +1,7 @@
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Ambev.DeveloperEvaluation.ORM;
+using Ambev.DeveloperEvaluation.ORM.Interceptors;
 using Ambev.DeveloperEvaluation.ORM.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -21,8 +22,11 @@ public class InfrastructureModuleInitializer : IModuleInitializer
 
     private static void AddDataBase(WebApplicationBuilder builder)
     {
-        builder.Services.AddDbContext<DefaultContext>(options =>
+        builder.Services.AddScoped<PublishDomainEventsInterceptor>();
+
+        builder.Services.AddDbContext<DefaultContext>((serviceProvider, options) =>
         {
+            options.AddInterceptors(serviceProvider.GetRequiredService<PublishDomainEventsInterceptor>());
             options.UseNpgsql(
                 builder.Configuration.GetConnectionString("DefaultConnection"),
                 b =>

@@ -23,6 +23,7 @@ public class SaleRepository : ISaleRepository
     public async Task<Sale?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Sales
+            .AsNoTracking()
             .Include(sale => sale.Items)
             .FirstOrDefaultAsync(sale => sale.Id == id, cancellationToken);
     }

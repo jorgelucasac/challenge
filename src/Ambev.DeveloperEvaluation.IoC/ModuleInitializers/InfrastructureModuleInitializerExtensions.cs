@@ -1,3 +1,6 @@
+using Ambev.DeveloperEvaluation.Common.Security;
+using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.ORM;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -16,19 +19,97 @@ public static class InfrastructureModuleInitializerExtensions
         try
         {
             var context = scope.ServiceProvider.GetRequiredService<DefaultContext>();
-
             var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
 
-            if (pendingMigrations.Any())
+            if (!pendingMigrations.Any())
             {
-                logger.LogInformation("Applying database migrations...");
-                await context.Database.MigrateAsync();
-                logger.LogInformation("Database migrations applied successfully.");
+                logger.LogInformation("No pending database migrations were found.");
+                return;
             }
+
+            await context.Database.MigrateAsync();
+            logger.LogInformation(
+                "Database migrations applied successfully. PendingCount={PendingCount}",
+                pendingMigrations.Count());
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Database migrations could not be applied during startup. The application will continue running.");
+        }
+    }
+
+    public static async Task SeedDataSafelyAsync(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<DefaultContext>>();
+
+        try
+        {
+            var context = scope.ServiceProvider.GetRequiredService<DefaultContext>();
+            var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+
+            if (!await context.Users.AnyAsync())
+            {
+                context.Users.Add(new User
+                {
+                    Username = "Admin User",
+                    Email = "admin@developerstore.local",
+                    Phone = "(11) 99999-9999",
+                    Password = passwordHasher.HashPassword("Admin@123"),
+                    Role = UserRole.Admin,
+                    Status = UserStatus.Active
+                });
+            }
+
+            if (!await context.Sales.AnyAsync())
+            {
+                context.Sales.AddRange(
+                    Sale.Create(
+                        "SALE-0001",
+                        DateTime.UtcNow.AddDays(-2),
+                        "customer-seed-1",
+                        "John Doe",
+                        "branch-seed-1",
+                        "Sao Paulo",
+                        [
+                            new SaleItemInput("product-seed-1", "Laptop Pro 14", 1, 7500m),
+                            new SaleItemInput("product-seed-2", "Wireless Mouse", 4, 150m)
+                        ]),
+                    Sale.Create(
+                        "SALE-0002",
+                        DateTime.UtcNow.AddDays(-1),
+                        "customer-seed-2",
+                        "Mary Smith",
+                        "branch-seed-2",
+                        "Rio de Janeiro",
+                        [
+                            new SaleItemInput("product-seed-3", "Mechanical Keyboard", 2, 550m),
+                            new SaleItemInput("product-seed-4", "USB-C Dock", 5, 320m)
+                        ]),
+                    Sale.Create(
+                        "SALE-0003",
+                        DateTime.UtcNow,
+                        "customer-seed-3",
+                        "Acme Corp",
+                        "branch-seed-3",
+                        "Belo Horizonte",
+                        [
+                            new SaleItemInput("product-seed-5", "4K Monitor", 10, 1800m)
+                        ]));
+            }
+
+            if (!context.ChangeTracker.HasChanges())
+            {
+                logger.LogInformation("Seed data skipped because the database already contains records.");
+                return;
+            }
+
+            await context.SaveChangesAsync();
+            logger.LogInformation("Seed data applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Seed data could not be applied during startup. The application will continue running.");
         }
     }
 }

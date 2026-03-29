@@ -64,6 +64,7 @@ public class Program
             app.MapControllers();
 
             await app.ApplyMigrationsSafelyAsync();
+            await app.SeedDataSafelyAsync();
 
             await app.RunAsync();
         }

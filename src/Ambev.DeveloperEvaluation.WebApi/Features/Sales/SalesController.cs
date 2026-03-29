@@ -3,9 +3,11 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
+using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.GetSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 
@@ -44,6 +46,31 @@ public class SalesController : BaseController
         });
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(PaginatedResponse<ListSaleResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ListSales([FromQuery] ListSalesRequest request, CancellationToken cancellationToken)
+    {
+        var validator = new ListSalesRequestValidator();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+            return BadRequest(validationResult.Errors);
+
+        var command = _mapper.Map<ListSalesCommand>(request);
+        var response = await _mediator.Send(command, cancellationToken);
+        var items = _mapper.Map<List<ListSaleResponse>>(response.Items);
+
+        return new OkObjectResult(new PaginatedResponse<ListSaleResponse>
+        {
+            Success = true,
+            Data = items,
+            CurrentPage = response.CurrentPage,
+            TotalPages = (int)Math.Ceiling(response.TotalCount / (double)response.PageSize),
+            TotalCount = response.TotalCount
+        });
+    }
+
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponseWithData<CreateSaleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
@@ -60,7 +87,7 @@ public class SalesController : BaseController
         var command = _mapper.Map<GetSaleCommand>(request.Id);
         var response = await _mediator.Send(command, cancellationToken);
 
-        return Ok(new ApiResponseWithData<CreateSaleResponse>
+        return new OkObjectResult(new ApiResponseWithData<CreateSaleResponse>
         {
             Success = true,
             Message = "Sale retrieved successfully",

@@ -7,6 +7,7 @@ using Xunit;
 using Ambev.DeveloperEvaluation.Application.Sales.ActivateSale;
 using Ambev.DeveloperEvaluation.Application.Sales.CancelSale;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
+using Ambev.DeveloperEvaluation.Application.Sales.DeleteSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
 using Ambev.DeveloperEvaluation.Application.Sales.UpdateSale;
@@ -16,6 +17,7 @@ using Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ActivateSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CancelSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CreateSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.DeleteSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.UpdateSale;
 
@@ -242,5 +244,32 @@ public class SalesControllerTests
 
         payload.Success.Should().BeTrue();
         payload.Data!.IsCancelled.Should().BeFalse();
+    }
+
+    [Fact(DisplayName = "Given valid id When deleting sale Then returns ok response")]
+    public async Task DeleteSale_ValidRequest_ReturnsOkResult()
+    {
+        var saleId = Guid.NewGuid();
+        var command = new DeleteSaleCommand(saleId);
+        var result = new DeleteSaleResponse { Success = true };
+
+        _mapper.Map<DeleteSaleCommand>(saleId).Returns(command);
+        _mediator.Send(command, Arg.Any<CancellationToken>()).Returns(result);
+
+        var actionResult = await _controller.DeleteSale(saleId, CancellationToken.None);
+
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var payload = okResult.Value.Should().BeOfType<ApiResponse>().Subject;
+
+        payload.Success.Should().BeTrue();
+        payload.Message.Should().Be("Sale deleted successfully");
+    }
+
+    [Fact(DisplayName = "Given empty id When deleting sale Then returns bad request")]
+    public async Task DeleteSale_InvalidRequest_ReturnsBadRequest()
+    {
+        var actionResult = await _controller.DeleteSale(Guid.Empty, CancellationToken.None);
+
+        actionResult.Should().BeOfType<BadRequestObjectResult>();
     }
 }

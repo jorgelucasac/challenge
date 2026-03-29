@@ -1,6 +1,5 @@
 using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
@@ -16,7 +15,6 @@ public class CreateSaleHandlerTests
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISaleNumberGenerator _saleNumberGenerator;
     private readonly IMapper _mapper;
-    private readonly ILogger<CreateSaleHandler> _logger;
     private readonly CreateSaleHandler _handler;
 
     public CreateSaleHandlerTests()
@@ -25,8 +23,7 @@ public class CreateSaleHandlerTests
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _saleNumberGenerator = Substitute.For<ISaleNumberGenerator>();
         _mapper = Substitute.For<IMapper>();
-        _logger = Substitute.For<ILogger<CreateSaleHandler>>();
-        _handler = new CreateSaleHandler(_saleRepository, _unitOfWork, _saleNumberGenerator, _mapper, _logger);
+        _handler = new CreateSaleHandler(_saleRepository, _unitOfWork, _saleNumberGenerator, _mapper);
     }
 
     [Fact(DisplayName = "Given valid sale data When creating sale Then persists and returns created sale")]

@@ -1,6 +1,5 @@
 using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
@@ -15,7 +14,6 @@ public class UpdateSaleHandlerTests
     private readonly ISaleRepository _saleRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ILogger<UpdateSaleHandler> _logger;
     private readonly UpdateSaleHandler _handler;
 
     public UpdateSaleHandlerTests()
@@ -23,8 +21,7 @@ public class UpdateSaleHandlerTests
         _saleRepository = Substitute.For<ISaleRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _mapper = Substitute.For<IMapper>();
-        _logger = Substitute.For<ILogger<UpdateSaleHandler>>();
-        _handler = new UpdateSaleHandler(_saleRepository, _unitOfWork, _mapper, _logger);
+        _handler = new UpdateSaleHandler(_saleRepository, _unitOfWork, _mapper);
     }
 
     [Fact(DisplayName = "Given existing sale When updating sale Then updates items and returns sale")]

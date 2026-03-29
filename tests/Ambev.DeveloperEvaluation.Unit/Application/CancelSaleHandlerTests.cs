@@ -1,6 +1,5 @@
 using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 using Ambev.DeveloperEvaluation.Application.Sales.CancelSale;
@@ -15,7 +14,6 @@ public class CancelSaleHandlerTests
     private readonly ISaleRepository _saleRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ILogger<CancelSaleHandler> _logger;
     private readonly CancelSaleHandler _handler;
 
     public CancelSaleHandlerTests()
@@ -23,8 +21,7 @@ public class CancelSaleHandlerTests
         _saleRepository = Substitute.For<ISaleRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _mapper = Substitute.For<IMapper>();
-        _logger = Substitute.For<ILogger<CancelSaleHandler>>();
-        _handler = new CancelSaleHandler(_saleRepository, _unitOfWork, _mapper, _logger);
+        _handler = new CancelSaleHandler(_saleRepository, _unitOfWork, _mapper);
     }
 
     [Fact(DisplayName = "Given active sale When cancelling Then returns cancelled sale")]

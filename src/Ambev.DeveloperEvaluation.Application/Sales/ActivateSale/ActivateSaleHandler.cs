@@ -9,12 +9,18 @@ namespace Ambev.DeveloperEvaluation.Application.Sales.ActivateSale;
 public class ActivateSaleHandler : IRequestHandler<ActivateSaleCommand, CreateSaleResult>
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<ActivateSaleHandler> _logger;
 
-    public ActivateSaleHandler(ISaleRepository saleRepository, IMapper mapper, ILogger<ActivateSaleHandler> logger)
+    public ActivateSaleHandler(
+        ISaleRepository saleRepository,
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        ILogger<ActivateSaleHandler> logger)
     {
         _saleRepository = saleRepository;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
     }
@@ -29,6 +35,7 @@ public class ActivateSaleHandler : IRequestHandler<ActivateSaleCommand, CreateSa
 
         var activatedEvent = sale.Activate();
         var activatedSale = await _saleRepository.UpdateAsync(sale, cancellationToken);
+        await _unitOfWork.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
             "SaleActivated: SaleId={SaleId}, SaleNumber={SaleNumber}, ItemCount={ItemCount}, TotalAmount={TotalAmount}",

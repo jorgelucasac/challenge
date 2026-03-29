@@ -9,12 +9,18 @@ namespace Ambev.DeveloperEvaluation.Application.Sales.CancelSale;
 public class CancelSaleHandler : IRequestHandler<CancelSaleCommand, CreateSaleResult>
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<CancelSaleHandler> _logger;
 
-    public CancelSaleHandler(ISaleRepository saleRepository, IMapper mapper, ILogger<CancelSaleHandler> logger)
+    public CancelSaleHandler(
+        ISaleRepository saleRepository,
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        ILogger<CancelSaleHandler> logger)
     {
         _saleRepository = saleRepository;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
     }
@@ -29,6 +35,7 @@ public class CancelSaleHandler : IRequestHandler<CancelSaleCommand, CreateSaleRe
 
         var cancelledEvent = sale.Cancel();
         var cancelledSale = await _saleRepository.UpdateAsync(sale, cancellationToken);
+        await _unitOfWork.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
             "SaleCancelled: SaleId={SaleId}, SaleNumber={SaleNumber}, ItemCount={ItemCount}, TotalAmount={TotalAmount}",

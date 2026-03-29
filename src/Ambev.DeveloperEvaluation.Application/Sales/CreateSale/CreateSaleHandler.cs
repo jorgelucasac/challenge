@@ -9,17 +9,20 @@ namespace Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleResult>
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ISaleNumberGenerator _saleNumberGenerator;
     private readonly IMapper _mapper;
     private readonly ILogger<CreateSaleHandler> _logger;
 
     public CreateSaleHandler(
         ISaleRepository saleRepository,
+        IUnitOfWork unitOfWork,
         ISaleNumberGenerator saleNumberGenerator,
         IMapper mapper,
         ILogger<CreateSaleHandler> logger)
     {
         _saleRepository = saleRepository;
+        _unitOfWork = unitOfWork;
         _saleNumberGenerator = saleNumberGenerator;
         _mapper = mapper;
         _logger = logger;
@@ -42,6 +45,7 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
                 item.UnitPrice)));
 
         var createdSale = await _saleRepository.CreateAsync(sale, cancellationToken);
+        await _unitOfWork.CommitAsync(cancellationToken);
         var createdEvent = createdSale.CreateCreatedEvent();
 
         _logger.LogInformation(

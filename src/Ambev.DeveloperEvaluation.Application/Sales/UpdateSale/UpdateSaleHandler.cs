@@ -9,15 +9,18 @@ namespace Ambev.DeveloperEvaluation.Application.Sales.UpdateSale;
 public class UpdateSaleHandler : IRequestHandler<UpdateSaleCommand, CreateSaleResult>
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<UpdateSaleHandler> _logger;
 
     public UpdateSaleHandler(
         ISaleRepository saleRepository,
+        IUnitOfWork unitOfWork,
         IMapper mapper,
         ILogger<UpdateSaleHandler> logger)
     {
         _saleRepository = saleRepository;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
         _logger = logger;
     }
@@ -62,6 +65,7 @@ public class UpdateSaleHandler : IRequestHandler<UpdateSaleCommand, CreateSaleRe
         }
 
         var updatedSale = await _saleRepository.UpdateAsync(sale, cancellationToken);
+        await _unitOfWork.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
             "SaleModified: SaleId={SaleId}, SaleNumber={SaleNumber}, ItemCount={ItemCount}, TotalAmount={TotalAmount}",

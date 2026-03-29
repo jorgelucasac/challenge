@@ -30,7 +30,7 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
         var saleNumber = _saleNumberGenerator.Generate();
         var sale = Sale.Create(
             saleNumber,
-            DateTime.UtcNow,
+            command.SaleDate,
             command.CustomerExternalId,
             command.CustomerName,
             command.BranchExternalId,

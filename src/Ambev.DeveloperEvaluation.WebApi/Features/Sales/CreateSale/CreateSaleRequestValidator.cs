@@ -6,6 +6,7 @@ public class CreateSaleRequestValidator : AbstractValidator<CreateSaleRequest>
 {
     public CreateSaleRequestValidator()
     {
+        RuleFor(request => request.SaleDate).NotEmpty();
         RuleFor(request => request.CustomerExternalId).NotEmpty();
         RuleFor(request => request.CustomerName).NotEmpty();
         RuleFor(request => request.BranchExternalId).NotEmpty();

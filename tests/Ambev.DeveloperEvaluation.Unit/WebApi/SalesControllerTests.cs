@@ -4,14 +4,20 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Xunit;
+using Ambev.DeveloperEvaluation.Application.Sales.ActivateSale;
+using Ambev.DeveloperEvaluation.Application.Sales.CancelSale;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
+using Ambev.DeveloperEvaluation.Application.Sales.UpdateSale;
 using Ambev.DeveloperEvaluation.Domain.Common;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ActivateSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CancelSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.UpdateSale;
 
 namespace Ambev.DeveloperEvaluation.Unit.WebApi;
 
@@ -125,5 +131,116 @@ public class SalesControllerTests
         var actionResult = await _controller.ListSales(new ListSalesRequest { _page = 0 }, CancellationToken.None);
 
         actionResult.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact(DisplayName = "Given valid request When updating sale Then returns ok response")]
+    public async Task UpdateSale_ValidRequest_ReturnsOkResult()
+    {
+        var saleId = Guid.NewGuid();
+        var request = new UpdateSaleRequest
+        {
+            SaleDate = DateTime.UtcNow,
+            CustomerExternalId = "customer-1",
+            CustomerName = "Customer",
+            BranchExternalId = "branch-1",
+            BranchName = "Branch",
+            Items =
+            [
+                new UpdateSaleItemRequest
+                {
+                    Id = Guid.NewGuid(),
+                    ProductExternalId = "product-1",
+                    ProductName = "Product",
+                    Quantity = 1,
+                    UnitPrice = 10m
+                }
+            ]
+        };
+        var command = new UpdateSaleCommand { Id = saleId };
+        var result = new CreateSaleResult { Id = saleId, SaleNumber = "SALE-001" };
+        var response = new CreateSaleResponse { Id = saleId, SaleNumber = "SALE-001" };
+
+        _mapper.Map<UpdateSaleCommand>(Arg.Is<UpdateSaleRequest>(item => item.Id == saleId)).Returns(command);
+        _mediator.Send(command, Arg.Any<CancellationToken>()).Returns(result);
+        _mapper.Map<CreateSaleResponse>(result).Returns(response);
+
+        var actionResult = await _controller.UpdateSale(saleId, request, CancellationToken.None);
+
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var payload = okResult.Value.Should().BeOfType<ApiResponseWithData<CreateSaleResponse>>().Subject;
+
+        payload.Success.Should().BeTrue();
+        payload.Data.Should().NotBeNull();
+        payload.Data!.SaleNumber.Should().Be("SALE-001");
+    }
+
+    [Fact(DisplayName = "Given empty route id When updating sale Then returns bad request")]
+    public async Task UpdateSale_InvalidRequest_ReturnsBadRequest()
+    {
+        var request = new UpdateSaleRequest
+        {
+            SaleDate = DateTime.UtcNow,
+            CustomerExternalId = "customer-1",
+            CustomerName = "Customer",
+            BranchExternalId = "branch-1",
+            BranchName = "Branch",
+            Items =
+            [
+                new UpdateSaleItemRequest
+                {
+                    Id = Guid.NewGuid(),
+                    ProductExternalId = "product-1",
+                    ProductName = "Product",
+                    Quantity = 1,
+                    UnitPrice = 10m
+                }
+            ]
+        };
+
+        var actionResult = await _controller.UpdateSale(Guid.Empty, request, CancellationToken.None);
+
+        actionResult.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact(DisplayName = "Given valid id When cancelling sale Then returns ok response")]
+    public async Task CancelSale_ValidRequest_ReturnsOkResult()
+    {
+        var saleId = Guid.NewGuid();
+        var command = new CancelSaleCommand(saleId);
+        var result = new CreateSaleResult { Id = saleId, SaleNumber = "SALE-001", IsCancelled = true };
+        var response = new CreateSaleResponse { Id = saleId, SaleNumber = "SALE-001", IsCancelled = true };
+
+        _mapper.Map<CancelSaleCommand>(saleId).Returns(command);
+        _mediator.Send(command, Arg.Any<CancellationToken>()).Returns(result);
+        _mapper.Map<CreateSaleResponse>(result).Returns(response);
+
+        var actionResult = await _controller.CancelSale(saleId, CancellationToken.None);
+
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var payload = okResult.Value.Should().BeOfType<ApiResponseWithData<CreateSaleResponse>>().Subject;
+
+        payload.Success.Should().BeTrue();
+        payload.Data!.IsCancelled.Should().BeTrue();
+    }
+
+    [Fact(DisplayName = "Given valid id When activating sale Then returns ok response")]
+    public async Task ActivateSale_ValidRequest_ReturnsOkResult()
+    {
+        var saleId = Guid.NewGuid();
+        var command = new ActivateSaleCommand(saleId);
+        var result = new CreateSaleResult { Id = saleId, SaleNumber = "SALE-001", IsCancelled = false };
+        var response = new CreateSaleResponse { Id = saleId, SaleNumber = "SALE-001", IsCancelled = false };
+
+        _mapper.Map<ActivateSaleCommand>(saleId).Returns(command);
+        _mediator.Send(command, Arg.Any<CancellationToken>()).Returns(result);
+        _mapper.Map<CreateSaleResponse>(result).Returns(response);
+
+        var actionResult = await _controller.ActivateSale(saleId, CancellationToken.None);
+
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var payload = okResult.Value.Should().BeOfType<ApiResponseWithData<CreateSaleResponse>>().Subject;
+
+        payload.Success.Should().BeTrue();
+        payload.Data!.IsCancelled.Should().BeFalse();
     }
 }

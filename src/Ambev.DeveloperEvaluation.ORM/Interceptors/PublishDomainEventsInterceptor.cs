@@ -60,9 +60,10 @@ public class PublishDomainEventsInterceptor : SaveChangesInterceptor
         }
 
         var domainEntities = context.ChangeTracker
-            .Entries<BaseEntity>()
-            .Where(entry => entry.Entity.DomainEvents.Count > 0)
+            .Entries()
             .Select(entry => entry.Entity)
+            .OfType<IHasDomainEvents>()
+            .Where(entity => entity.DomainEvents.Count > 0)
             .ToList();
 
         var domainEvents = domainEntities

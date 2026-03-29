@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Xunit;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
+using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CreateSale;
@@ -57,6 +58,36 @@ public class SalesControllerTests
     public async Task CreateSale_InvalidRequest_ReturnsBadRequest()
     {
         var actionResult = await _controller.CreateSale(new CreateSaleRequest(), CancellationToken.None);
+
+        actionResult.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact(DisplayName = "Given valid id When getting sale Then returns ok response")]
+    public async Task GetSale_ValidRequest_ReturnsOkResult()
+    {
+        var saleId = Guid.NewGuid();
+        var command = new GetSaleCommand(saleId);
+        var result = new CreateSaleResult { Id = saleId, SaleNumber = "SALE-001" };
+        var response = new CreateSaleResponse { Id = saleId, SaleNumber = "SALE-001" };
+
+        _mapper.Map<GetSaleCommand>(saleId).Returns(command);
+        _mediator.Send(command, Arg.Any<CancellationToken>()).Returns(result);
+        _mapper.Map<CreateSaleResponse>(result).Returns(response);
+
+        var actionResult = await _controller.GetSale(saleId, CancellationToken.None);
+
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var payload = okResult.Value.Should().BeOfType<ApiResponseWithData<CreateSaleResponse>>().Subject;
+
+        payload.Success.Should().BeTrue();
+        payload.Data.Should().NotBeNull();
+        payload.Data!.SaleNumber.Should().Be("SALE-001");
+    }
+
+    [Fact(DisplayName = "Given empty id When getting sale Then returns bad request")]
+    public async Task GetSale_InvalidRequest_ReturnsBadRequest()
+    {
+        var actionResult = await _controller.GetSale(Guid.Empty, CancellationToken.None);
 
         actionResult.Should().BeOfType<BadRequestObjectResult>();
     }

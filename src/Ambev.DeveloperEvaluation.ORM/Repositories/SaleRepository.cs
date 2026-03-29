@@ -19,4 +19,11 @@ public class SaleRepository : ISaleRepository
         await _context.SaveChangesAsync(cancellationToken);
         return sale;
     }
+
+    public async Task<Sale?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Sales
+            .Include(sale => sale.Items)
+            .FirstOrDefaultAsync(sale => sale.Id == id, cancellationToken);
+    }
 }

@@ -6,9 +6,12 @@ using NSubstitute;
 using Xunit;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
+using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
+using Ambev.DeveloperEvaluation.Domain.Common;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CreateSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
 
 namespace Ambev.DeveloperEvaluation.Unit.WebApi;
 
@@ -88,6 +91,38 @@ public class SalesControllerTests
     public async Task GetSale_InvalidRequest_ReturnsBadRequest()
     {
         var actionResult = await _controller.GetSale(Guid.Empty, CancellationToken.None);
+
+        actionResult.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact(DisplayName = "Given valid list request When listing sales Then returns paginated response")]
+    public async Task ListSales_ValidRequest_ReturnsOkResult()
+    {
+        var request = new ListSalesRequest { _page = 2, _size = 5, _order = "saleDate_desc" };
+        var command = new ListSalesCommand { Page = 2, Size = 5, Order = "saleDate_desc" };
+        var resultItems = new List<ListSaleResultItem> { new() { Id = Guid.NewGuid(), SaleNumber = "SALE-001" } };
+        var responseItems = new List<ListSaleResponse> { new() { Id = resultItems[0].Id, SaleNumber = "SALE-001" } };
+        var result = new PagedResult<ListSaleResultItem>(resultItems, 2, 5, 8);
+
+        _mapper.Map<ListSalesCommand>(request).Returns(command);
+        _mediator.Send(command, Arg.Any<CancellationToken>()).Returns(result);
+        _mapper.Map<List<ListSaleResponse>>(result.Items).Returns(responseItems);
+
+        var actionResult = await _controller.ListSales(request, CancellationToken.None);
+
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var payload = okResult.Value.Should().BeOfType<PaginatedResponse<ListSaleResponse>>().Subject;
+
+        payload.Success.Should().BeTrue();
+        payload.CurrentPage.Should().Be(2);
+        payload.TotalCount.Should().Be(8);
+        payload.Data.Should().ContainSingle();
+    }
+
+    [Fact(DisplayName = "Given invalid list request When listing sales Then returns bad request")]
+    public async Task ListSales_InvalidRequest_ReturnsBadRequest()
+    {
+        var actionResult = await _controller.ListSales(new ListSalesRequest { _page = 0 }, CancellationToken.None);
 
         actionResult.Should().BeOfType<BadRequestObjectResult>();
     }

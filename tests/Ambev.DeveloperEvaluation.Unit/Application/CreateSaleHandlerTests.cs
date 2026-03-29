@@ -13,6 +13,7 @@ namespace Ambev.DeveloperEvaluation.Unit.Application;
 public class CreateSaleHandlerTests
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ISaleNumberGenerator _saleNumberGenerator;
     private readonly IMapper _mapper;
     private readonly ILogger<CreateSaleHandler> _logger;
@@ -21,10 +22,11 @@ public class CreateSaleHandlerTests
     public CreateSaleHandlerTests()
     {
         _saleRepository = Substitute.For<ISaleRepository>();
+        _unitOfWork = Substitute.For<IUnitOfWork>();
         _saleNumberGenerator = Substitute.For<ISaleNumberGenerator>();
         _mapper = Substitute.For<IMapper>();
         _logger = Substitute.For<ILogger<CreateSaleHandler>>();
-        _handler = new CreateSaleHandler(_saleRepository, _saleNumberGenerator, _mapper, _logger);
+        _handler = new CreateSaleHandler(_saleRepository, _unitOfWork, _saleNumberGenerator, _mapper, _logger);
     }
 
     [Fact(DisplayName = "Given valid sale data When creating sale Then persists and returns created sale")]
@@ -43,6 +45,7 @@ public class CreateSaleHandlerTests
         createSaleResult.Id.Should().Be(sale.Id);
         createSaleResult.SaleNumber.Should().Be("SALE-123");
         await _saleRepository.Received(1).CreateAsync(Arg.Any<Sale>(), Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     private static Sale CreateSale(CreateSaleCommand command, string saleNumber)

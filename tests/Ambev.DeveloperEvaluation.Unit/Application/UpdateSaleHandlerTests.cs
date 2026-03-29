@@ -13,6 +13,7 @@ namespace Ambev.DeveloperEvaluation.Unit.Application;
 public class UpdateSaleHandlerTests
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<UpdateSaleHandler> _logger;
     private readonly UpdateSaleHandler _handler;
@@ -20,9 +21,10 @@ public class UpdateSaleHandlerTests
     public UpdateSaleHandlerTests()
     {
         _saleRepository = Substitute.For<ISaleRepository>();
+        _unitOfWork = Substitute.For<IUnitOfWork>();
         _mapper = Substitute.For<IMapper>();
         _logger = Substitute.For<ILogger<UpdateSaleHandler>>();
-        _handler = new UpdateSaleHandler(_saleRepository, _mapper, _logger);
+        _handler = new UpdateSaleHandler(_saleRepository, _unitOfWork, _mapper, _logger);
     }
 
     [Fact(DisplayName = "Given existing sale When updating sale Then updates items and returns sale")]
@@ -79,6 +81,7 @@ public class UpdateSaleHandlerTests
         sale.Items.Should().Contain(item => item.ProductName == "Product One Updated" && item.Quantity == 4);
         sale.Items.Should().Contain(item => item.ProductName == "Product Two");
         await _saleRepository.Received(1).UpdateAsync(sale, Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact(DisplayName = "Given existing sale When cancelling item Then recalculates total")]
@@ -132,6 +135,7 @@ public class UpdateSaleHandlerTests
         response.TotalAmount.Should().Be(20m);
         itemToCancel.IsCancelled.Should().BeTrue();
         sale.TotalAmount.Should().Be(20m);
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact(DisplayName = "Given missing sale When updating Then throws not found")]

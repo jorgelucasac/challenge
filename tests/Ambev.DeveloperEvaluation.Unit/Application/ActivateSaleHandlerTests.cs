@@ -13,6 +13,7 @@ namespace Ambev.DeveloperEvaluation.Unit.Application;
 public class ActivateSaleHandlerTests
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<ActivateSaleHandler> _logger;
     private readonly ActivateSaleHandler _handler;
@@ -20,9 +21,10 @@ public class ActivateSaleHandlerTests
     public ActivateSaleHandlerTests()
     {
         _saleRepository = Substitute.For<ISaleRepository>();
+        _unitOfWork = Substitute.For<IUnitOfWork>();
         _mapper = Substitute.For<IMapper>();
         _logger = Substitute.For<ILogger<ActivateSaleHandler>>();
-        _handler = new ActivateSaleHandler(_saleRepository, _mapper, _logger);
+        _handler = new ActivateSaleHandler(_saleRepository, _unitOfWork, _mapper, _logger);
     }
 
     [Fact(DisplayName = "Given cancelled sale When activating Then returns active sale")]
@@ -48,6 +50,7 @@ public class ActivateSaleHandlerTests
         response.IsCancelled.Should().BeFalse();
         sale.IsCancelled.Should().BeFalse();
         sale.TotalAmount.Should().BeGreaterThan(0m);
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact(DisplayName = "Given active sale When activating Then operation is idempotent")]
@@ -71,5 +74,6 @@ public class ActivateSaleHandlerTests
 
         response.IsCancelled.Should().BeFalse();
         sale.IsCancelled.Should().BeFalse();
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 }

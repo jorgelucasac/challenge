@@ -13,6 +13,7 @@ namespace Ambev.DeveloperEvaluation.Unit.Application;
 public class CancelSaleHandlerTests
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ILogger<CancelSaleHandler> _logger;
     private readonly CancelSaleHandler _handler;
@@ -20,9 +21,10 @@ public class CancelSaleHandlerTests
     public CancelSaleHandlerTests()
     {
         _saleRepository = Substitute.For<ISaleRepository>();
+        _unitOfWork = Substitute.For<IUnitOfWork>();
         _mapper = Substitute.For<IMapper>();
         _logger = Substitute.For<ILogger<CancelSaleHandler>>();
-        _handler = new CancelSaleHandler(_saleRepository, _mapper, _logger);
+        _handler = new CancelSaleHandler(_saleRepository, _unitOfWork, _mapper, _logger);
     }
 
     [Fact(DisplayName = "Given active sale When cancelling Then returns cancelled sale")]
@@ -46,6 +48,7 @@ public class CancelSaleHandlerTests
 
         response.IsCancelled.Should().BeTrue();
         sale.IsCancelled.Should().BeTrue();
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact(DisplayName = "Given already cancelled sale When cancelling Then operation is idempotent")]
@@ -70,5 +73,6 @@ public class CancelSaleHandlerTests
 
         response.IsCancelled.Should().BeTrue();
         sale.IsCancelled.Should().BeTrue();
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 }

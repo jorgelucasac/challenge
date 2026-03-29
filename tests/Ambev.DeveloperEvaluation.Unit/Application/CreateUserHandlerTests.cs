@@ -16,6 +16,7 @@ namespace Ambev.DeveloperEvaluation.Unit.Application;
 public class CreateUserHandlerTests
 {
     private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IPasswordHasher _passwordHasher;
     private readonly CreateUserHandler _handler;
@@ -27,9 +28,10 @@ public class CreateUserHandlerTests
     public CreateUserHandlerTests()
     {
         _userRepository = Substitute.For<IUserRepository>();
+        _unitOfWork = Substitute.For<IUnitOfWork>();
         _mapper = Substitute.For<IMapper>();
         _passwordHasher = Substitute.For<IPasswordHasher>();
-        _handler = new CreateUserHandler(_userRepository, _mapper, _passwordHasher);
+        _handler = new CreateUserHandler(_userRepository, _unitOfWork, _mapper, _passwordHasher);
     }
 
     /// <summary>
@@ -71,6 +73,7 @@ public class CreateUserHandlerTests
         createUserResult.Should().NotBeNull();
         createUserResult.Id.Should().Be(user.Id);
         await _userRepository.Received(1).CreateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     /// <summary>
@@ -123,6 +126,7 @@ public class CreateUserHandlerTests
         await _userRepository.Received(1).CreateAsync(
             Arg.Is<User>(u => u.Password == hashedPassword),
             Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     /// <summary>
@@ -159,5 +163,6 @@ public class CreateUserHandlerTests
             c.Phone == command.Phone &&
             c.Status == command.Status &&
             c.Role == command.Role));
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 }

@@ -9,12 +9,14 @@ namespace Ambev.DeveloperEvaluation.Unit.Application;
 public class DeleteSaleHandlerTests
 {
     private readonly ISaleRepository _saleRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly DeleteSaleHandler _handler;
 
     public DeleteSaleHandlerTests()
     {
         _saleRepository = Substitute.For<ISaleRepository>();
-        _handler = new DeleteSaleHandler(_saleRepository);
+        _unitOfWork = Substitute.For<IUnitOfWork>();
+        _handler = new DeleteSaleHandler(_saleRepository, _unitOfWork);
     }
 
     [Fact(DisplayName = "Given existing sale When deleting Then returns success")]
@@ -26,6 +28,7 @@ public class DeleteSaleHandlerTests
         var response = await _handler.Handle(new DeleteSaleCommand(saleId), CancellationToken.None);
 
         response.Success.Should().BeTrue();
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact(DisplayName = "Given missing sale When deleting Then throws not found")]
@@ -37,5 +40,6 @@ public class DeleteSaleHandlerTests
         var act = () => _handler.Handle(new DeleteSaleCommand(saleId), CancellationToken.None);
 
         await act.Should().ThrowAsync<KeyNotFoundException>();
+        await _unitOfWork.DidNotReceive().CommitAsync(Arg.Any<CancellationToken>());
     }
 }

@@ -102,4 +102,18 @@ public class SaleRepository : ISaleRepository
         await _context.SaveChangesAsync(cancellationToken);
         return sale;
     }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var sale = await _context.Sales.FirstOrDefaultAsync(sale => sale.Id == id, cancellationToken);
+        if (sale == null)
+        {
+            return false;
+        }
+
+        _context.Sales.Remove(sale);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 }

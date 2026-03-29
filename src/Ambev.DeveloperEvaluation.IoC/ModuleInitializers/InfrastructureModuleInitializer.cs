@@ -44,6 +44,7 @@ public class InfrastructureModuleInitializer : IModuleInitializer
     private static void AddRepositories(WebApplicationBuilder builder)
     {
         builder.Services.AddSingleton<ISaleNumberGenerator, DefaultSaleNumberGenerator>();
+        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<ISaleRepository, SaleRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
     }

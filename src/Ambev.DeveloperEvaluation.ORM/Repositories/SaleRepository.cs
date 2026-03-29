@@ -17,7 +17,6 @@ public class SaleRepository : ISaleRepository
     public async Task<Sale> CreateAsync(Sale sale, CancellationToken cancellationToken = default)
     {
         await _context.Sales.AddAsync(sale, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
         return sale;
     }
 
@@ -97,10 +96,9 @@ public class SaleRepository : ISaleRepository
         return new PagedResult<Sale>(items, filter.Page, filter.Size, totalCount);
     }
 
-    public async Task<Sale> UpdateAsync(Sale sale, CancellationToken cancellationToken = default)
+    public Task<Sale> UpdateAsync(Sale sale, CancellationToken cancellationToken = default)
     {
-        await _context.SaveChangesAsync(cancellationToken);
-        return sale;
+        return Task.FromResult(sale);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -112,8 +110,6 @@ public class SaleRepository : ISaleRepository
         }
 
         _context.Sales.Remove(sale);
-        await _context.SaveChangesAsync(cancellationToken);
-
         return true;
     }
 }

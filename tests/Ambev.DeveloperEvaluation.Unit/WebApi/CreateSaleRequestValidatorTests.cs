@@ -13,6 +13,7 @@ public class CreateSaleRequestValidatorTests
     {
         var request = new CreateSaleRequest
         {
+            SaleDate = DateTime.UtcNow,
             BranchExternalId = "branch-1",
             BranchName = "Branch",
             Items = [new CreateSaleItemRequest { ProductExternalId = "product-1", ProductName = "Product", Quantity = 1, UnitPrice = 10m }]
@@ -28,11 +29,29 @@ public class CreateSaleRequestValidatorTests
     {
         var request = new CreateSaleRequest
         {
+            SaleDate = DateTime.UtcNow,
             CustomerExternalId = "customer-1",
             CustomerName = "Customer",
             BranchExternalId = "branch-1",
             BranchName = "Branch",
             Items = [new CreateSaleItemRequest { ProductExternalId = "product-1", ProductName = "Product", Quantity = 1, UnitPrice = 0m }]
+        };
+
+        var result = _validator.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+    }
+
+    [Fact(DisplayName = "Request validator should fail when sale date is missing")]
+    public void Given_RequestWithoutSaleDate_When_Validated_Then_ShouldBeInvalid()
+    {
+        var request = new CreateSaleRequest
+        {
+            CustomerExternalId = "customer-1",
+            CustomerName = "Customer",
+            BranchExternalId = "branch-1",
+            BranchName = "Branch",
+            Items = [new CreateSaleItemRequest { ProductExternalId = "product-1", ProductName = "Product", Quantity = 1, UnitPrice = 10m }]
         };
 
         var result = _validator.Validate(request);

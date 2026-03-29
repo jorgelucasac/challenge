@@ -30,4 +30,15 @@ public class CreateSaleCommandValidatorTests
 
         result.IsValid.Should().BeFalse();
     }
+
+    [Fact(DisplayName = "Validator should fail when sale date is missing")]
+    public void Given_CommandWithoutSaleDate_When_Validated_Then_ShouldBeInvalid()
+    {
+        var command = CreateSaleHandlerTestData.GenerateValidCommand();
+        command.SaleDate = default;
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+    }
 }

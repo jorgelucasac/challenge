@@ -41,6 +41,7 @@ public class SalesControllerTests
     {
         var request = new CreateSaleRequest
         {
+            SaleDate = DateTime.UtcNow,
             CustomerExternalId = "customer-1",
             CustomerName = "Customer",
             BranchExternalId = "branch-1",

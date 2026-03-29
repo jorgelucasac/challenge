@@ -49,7 +49,7 @@ public class CreateSaleHandlerTests
     {
         return Sale.Create(
             saleNumber,
-            DateTime.UtcNow,
+            command.SaleDate,
             command.CustomerExternalId,
             command.CustomerName,
             command.BranchExternalId,

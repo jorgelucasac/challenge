@@ -12,6 +12,7 @@ public static class CreateSaleHandlerTestData
         .RuleFor(item => item.UnitPrice, faker => decimal.Parse(faker.Commerce.Price(10, 200)));
 
     private static readonly Faker<CreateSaleCommand> CommandFaker = new Faker<CreateSaleCommand>()
+        .RuleFor(command => command.SaleDate, faker => faker.Date.RecentOffset(30).UtcDateTime)
         .RuleFor(command => command.CustomerExternalId, faker => $"customer-{faker.Random.Guid()}")
         .RuleFor(command => command.CustomerName, faker => faker.Person.FullName)
         .RuleFor(command => command.BranchExternalId, faker => $"branch-{faker.Random.Guid()}")

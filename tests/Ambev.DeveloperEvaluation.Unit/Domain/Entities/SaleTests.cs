@@ -137,6 +137,59 @@ public class SaleTests
         sale.Items.Should().OnlyContain(item => item.IsCancelled);
     }
 
+    [Fact(DisplayName = "Updating sale details should change header data and set updated at")]
+    public void Given_ExistingSale_When_DetailsUpdated_Then_ShouldUpdateHeader()
+    {
+        var sale = SaleTestData.GenerateValidSale();
+        var newDate = DateTime.UtcNow.AddDays(1);
+
+        sale.UpdateDetails(newDate, "customer-2", "Customer Two", "branch-2", "Branch Two");
+
+        sale.SaleDate.Should().Be(newDate);
+        sale.CustomerExternalId.Should().Be("customer-2");
+        sale.CustomerName.Should().Be("Customer Two");
+        sale.BranchExternalId.Should().Be("branch-2");
+        sale.BranchName.Should().Be("Branch Two");
+        sale.UpdatedAt.Should().NotBeNull();
+    }
+
+    [Fact(DisplayName = "Cancelled sale should not allow details update")]
+    public void Given_CancelledSale_When_DetailsUpdated_Then_ShouldThrowDomainException()
+    {
+        var sale = SaleTestData.GenerateValidSale();
+        sale.Cancel();
+
+        var act = () => sale.UpdateDetails(DateTime.UtcNow, "customer-2", "Customer Two", "branch-2", "Branch Two");
+
+        act.Should().Throw<DomainException>()
+            .WithMessage("Cancelled sales cannot be changed.");
+    }
+
+    [Fact(DisplayName = "Activating a cancelled sale should restore active status and totals")]
+    public void Given_CancelledSale_When_Activated_Then_ShouldRestoreTotal()
+    {
+        var sale = SaleTestData.GenerateValidSale();
+        sale.Cancel();
+
+        sale.Activate();
+
+        sale.IsCancelled.Should().BeFalse();
+        sale.TotalAmount.Should().BeGreaterThan(0m);
+        sale.Items.Should().OnlyContain(item => !item.IsCancelled);
+    }
+
+    [Fact(DisplayName = "Activating an active sale should be idempotent")]
+    public void Given_ActiveSale_When_Activated_Then_ShouldRemainActive()
+    {
+        var sale = SaleTestData.GenerateValidSale();
+        var originalTotal = sale.TotalAmount;
+
+        sale.Activate();
+
+        sale.IsCancelled.Should().BeFalse();
+        sale.TotalAmount.Should().Be(originalTotal);
+    }
+
     [Fact(DisplayName = "Item with invalid quantity should fail")]
     public void Given_ItemWithInvalidQuantity_When_Created_Then_ShouldThrowDomainException()
     {

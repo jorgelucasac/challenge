@@ -82,6 +82,23 @@ public class Sale : BaseEntity
         return new SaleCreatedEvent(Id, SaleNumber);
     }
 
+    public void UpdateDetails(
+        DateTime saleDate,
+        string customerExternalId,
+        string customerName,
+        string branchExternalId,
+        string branchName)
+    {
+        EnsureSaleIsActive();
+
+        SaleDate = saleDate;
+        CustomerExternalId = customerExternalId;
+        CustomerName = customerName;
+        BranchExternalId = branchExternalId;
+        BranchName = branchName;
+        Touch();
+    }
+
     public SaleModifiedEvent AddItem(
         string productExternalId,
         string productName,
@@ -149,6 +166,26 @@ public class Sale : BaseEntity
         RecalculateTotals();
 
         return new SaleCancelledEvent(Id, SaleNumber);
+    }
+
+    public SaleModifiedEvent Activate()
+    {
+        if (!IsCancelled)
+        {
+            return new SaleModifiedEvent(Id, SaleNumber);
+        }
+
+        IsCancelled = false;
+
+        foreach (var item in _items.Where(i => i.IsCancelled))
+        {
+            item.Activate();
+        }
+
+        Touch();
+        RecalculateTotals();
+
+        return new SaleModifiedEvent(Id, SaleNumber);
     }
 
     public void RecalculateTotals()

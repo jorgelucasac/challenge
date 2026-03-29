@@ -60,6 +60,17 @@ public class SaleItem : BaseEntity
         TotalAmount = 0;
     }
 
+    public void Activate()
+    {
+        if (!IsCancelled)
+        {
+            return;
+        }
+
+        IsCancelled = false;
+        Recalculate();
+    }
+
     public ValidationResultDetail Validate()
     {
         var validator = new SaleItemValidator();

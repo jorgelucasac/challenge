@@ -1,6 +1,5 @@
 using AutoMapper;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 
@@ -11,18 +10,15 @@ public class ActivateSaleHandler : IRequestHandler<ActivateSaleCommand, CreateSa
     private readonly ISaleRepository _saleRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ILogger<ActivateSaleHandler> _logger;
 
     public ActivateSaleHandler(
         ISaleRepository saleRepository,
         IUnitOfWork unitOfWork,
-        IMapper mapper,
-        ILogger<ActivateSaleHandler> logger)
+        IMapper mapper)
     {
         _saleRepository = saleRepository;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _logger = logger;
     }
 
     public async Task<CreateSaleResult> Handle(ActivateSaleCommand request, CancellationToken cancellationToken)
@@ -33,16 +29,9 @@ public class ActivateSaleHandler : IRequestHandler<ActivateSaleCommand, CreateSa
             throw new KeyNotFoundException($"Sale with ID {request.Id} not found");
         }
 
-        var activatedEvent = sale.Activate();
+        sale.Activate();
         var activatedSale = await _saleRepository.UpdateAsync(sale, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
-
-        _logger.LogInformation(
-            "SaleActivated: SaleId={SaleId}, SaleNumber={SaleNumber}, ItemCount={ItemCount}, TotalAmount={TotalAmount}",
-            activatedEvent.SaleId,
-            activatedEvent.SaleNumber,
-            activatedSale.Items.Count,
-            activatedSale.TotalAmount);
 
         return _mapper.Map<CreateSaleResult>(activatedSale);
     }

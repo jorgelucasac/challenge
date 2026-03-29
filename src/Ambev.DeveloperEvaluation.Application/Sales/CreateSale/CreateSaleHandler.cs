@@ -1,6 +1,5 @@
 using AutoMapper;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 
@@ -12,20 +11,17 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISaleNumberGenerator _saleNumberGenerator;
     private readonly IMapper _mapper;
-    private readonly ILogger<CreateSaleHandler> _logger;
 
     public CreateSaleHandler(
         ISaleRepository saleRepository,
         IUnitOfWork unitOfWork,
         ISaleNumberGenerator saleNumberGenerator,
-        IMapper mapper,
-        ILogger<CreateSaleHandler> logger)
+        IMapper mapper)
     {
         _saleRepository = saleRepository;
         _unitOfWork = unitOfWork;
         _saleNumberGenerator = saleNumberGenerator;
         _mapper = mapper;
-        _logger = logger;
     }
 
     public async Task<CreateSaleResult> Handle(CreateSaleCommand command, CancellationToken cancellationToken)
@@ -46,14 +42,6 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
 
         var createdSale = await _saleRepository.CreateAsync(sale, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
-        var createdEvent = createdSale.CreateCreatedEvent();
-
-        _logger.LogInformation(
-            "SaleCreated: SaleId={SaleId}, SaleNumber={SaleNumber}, ItemCount={ItemCount}, TotalAmount={TotalAmount}",
-            createdEvent.SaleId,
-            createdEvent.SaleNumber,
-            createdSale.Items.Count,
-            createdSale.TotalAmount);
 
         return _mapper.Map<CreateSaleResult>(createdSale);
     }

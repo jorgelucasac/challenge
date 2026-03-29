@@ -1,6 +1,5 @@
 using AutoMapper;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 
@@ -11,18 +10,15 @@ public class UpdateSaleHandler : IRequestHandler<UpdateSaleCommand, CreateSaleRe
     private readonly ISaleRepository _saleRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ILogger<UpdateSaleHandler> _logger;
 
     public UpdateSaleHandler(
         ISaleRepository saleRepository,
         IUnitOfWork unitOfWork,
-        IMapper mapper,
-        ILogger<UpdateSaleHandler> logger)
+        IMapper mapper)
     {
         _saleRepository = saleRepository;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _logger = logger;
     }
 
     public async Task<CreateSaleResult> Handle(UpdateSaleCommand request, CancellationToken cancellationToken)
@@ -64,15 +60,9 @@ public class UpdateSaleHandler : IRequestHandler<UpdateSaleCommand, CreateSaleRe
             sale.AddItem(item.ProductExternalId, item.ProductName, item.Quantity, item.UnitPrice);
         }
 
+        sale.MarkAsModified();
         var updatedSale = await _saleRepository.UpdateAsync(sale, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
-
-        _logger.LogInformation(
-            "SaleModified: SaleId={SaleId}, SaleNumber={SaleNumber}, ItemCount={ItemCount}, TotalAmount={TotalAmount}",
-            updatedSale.Id,
-            updatedSale.SaleNumber,
-            updatedSale.Items.Count,
-            updatedSale.TotalAmount);
 
         return _mapper.Map<CreateSaleResult>(updatedSale);
     }

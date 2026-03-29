@@ -1,4 +1,5 @@
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Events;
 using Ambev.DeveloperEvaluation.Unit.Domain.Entities.TestData;
 using FluentAssertions;
 using Xunit;
@@ -25,6 +26,21 @@ public class SaleTests
         item.DiscountAmount.Should().Be(0m);
         item.TotalAmount.Should().Be(30m);
         sale.TotalAmount.Should().Be(30m);
+    }
+
+    [Fact(DisplayName = "Creating a sale should enqueue created event")]
+    public void Given_NewSale_When_Created_Then_ShouldEnqueueCreatedEvent()
+    {
+        var sale = Sale.Create(
+            "SALE-100-A",
+            DateTime.UtcNow,
+            "customer-1",
+            "Customer",
+            "branch-1",
+            "Branch",
+            [new SaleItemInput("product-1", "Product", 3, 10m)]);
+
+        sale.DomainEvents.Should().ContainSingle(domainEvent => domainEvent is SaleCreatedEvent);
     }
 
     [Fact(DisplayName = "Item with four to nine units should receive ten percent discount")]
@@ -123,6 +139,7 @@ public class SaleTests
         itemToCancel.IsCancelled.Should().BeTrue();
         itemToCancel.TotalAmount.Should().Be(0m);
         sale.TotalAmount.Should().Be(20m);
+        sale.DomainEvents.OfType<ItemCancelledEvent>().Should().ContainSingle(itemCancelled => itemCancelled.ItemId == itemToCancel.Id);
     }
 
     [Fact(DisplayName = "Cancelling a sale should cancel items and zero total")]
@@ -176,6 +193,7 @@ public class SaleTests
         sale.IsCancelled.Should().BeFalse();
         sale.TotalAmount.Should().BeGreaterThan(0m);
         sale.Items.Should().OnlyContain(item => !item.IsCancelled);
+        sale.DomainEvents.Should().Contain(domainEvent => domainEvent is SaleModifiedEvent);
     }
 
     [Fact(DisplayName = "Activating an active sale should be idempotent")]

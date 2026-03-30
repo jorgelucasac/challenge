@@ -46,7 +46,7 @@ public class ProductsController : BaseController
         var command = _mapper.Map<ListProductsCommand>(request);
         var result = await _mediator.Send(command, cancellationToken);
 
-        return Ok(new PagedProductsResponse
+        return new OkObjectResult(new PagedProductsResponse
         {
             Data = _mapper.Map<List<ProductResponse>>(result.Items),
             TotalItems = result.TotalCount,
@@ -60,7 +60,7 @@ public class ProductsController : BaseController
     public async Task<IActionResult> ListCategories(CancellationToken cancellationToken)
     {
         var categories = await _mediator.Send(new ListProductCategoriesQuery(), cancellationToken);
-        return Ok(categories);
+        return new OkObjectResult(categories);
     }
 
     [HttpGet("category/{category}")]
@@ -80,7 +80,7 @@ public class ProductsController : BaseController
         var command = _mapper.Map<ListProductsCommand>(request);
         var result = await _mediator.Send(command, cancellationToken);
 
-        return Ok(new PagedProductsResponse
+        return new OkObjectResult(new PagedProductsResponse
         {
             Data = _mapper.Map<List<ProductResponse>>(result.Items),
             TotalItems = result.TotalCount,
@@ -104,7 +104,7 @@ public class ProductsController : BaseController
         }
 
         var result = await _mediator.Send(new GetProductCommand(id), cancellationToken);
-        return Ok(_mapper.Map<ProductResponse>(result));
+        return new OkObjectResult(_mapper.Map<ProductResponse>(result));
     }
 
     [HttpPost]
@@ -143,7 +143,7 @@ public class ProductsController : BaseController
         var command = _mapper.Map<UpdateProductCommand>(request);
         var result = await _mediator.Send(command, cancellationToken);
 
-        return Ok(_mapper.Map<ProductResponse>(result));
+        return new OkObjectResult(_mapper.Map<ProductResponse>(result));
     }
 
     [HttpDelete("{id:int}")]
@@ -162,7 +162,7 @@ public class ProductsController : BaseController
 
         await _mediator.Send(new DeleteProductCommand(id), cancellationToken);
 
-        return Ok(new DeleteProductResponse
+        return new OkObjectResult(new DeleteProductResponse
         {
             Message = "Product deleted successfully"
         });

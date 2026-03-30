@@ -98,6 +98,43 @@ public static class InfrastructureModuleInitializerExtensions
                         ]));
             }
 
+            if (!await context.Products.AnyAsync())
+            {
+                context.Products.AddRange(
+                    Product.Create(
+                        "Fjallraven Backpack",
+                        109.95m,
+                        "Everyday backpack with laptop compartment.",
+                        "bags",
+                        "https://fakestore.local/images/backpack.png",
+                        4.6m,
+                        120),
+                    Product.Create(
+                        "Slim Fit T-Shirt",
+                        22.30m,
+                        "Soft cotton t-shirt for daily wear.",
+                        "men's clothing",
+                        "https://fakestore.local/images/tshirt.png",
+                        4.2m,
+                        98),
+                    Product.Create(
+                        "Women's Jacket",
+                        55.99m,
+                        "Lightweight jacket with modern fit.",
+                        "women's clothing",
+                        "https://fakestore.local/images/jacket.png",
+                        4.8m,
+                        76),
+                    Product.Create(
+                        "Wireless Headphones",
+                        199.99m,
+                        "Noise-cancelling headphones with long battery life.",
+                        "electronics",
+                        "https://fakestore.local/images/headphones.png",
+                        4.7m,
+                        210));
+            }
+
             if (!context.ChangeTracker.HasChanges())
             {
                 logger.LogInformation("Seed data skipped because the database already contains records.");

@@ -49,8 +49,10 @@ public class InfrastructureModuleInitializer : IModuleInitializer
     {
         builder.Services.AddSingleton<ISaleNumberGenerator, DefaultSaleNumberGenerator>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+        builder.Services.AddScoped<ICartRepository, CartRepository>();
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
         builder.Services.AddScoped<ISaleRepository, SaleRepository>();
+        builder.Services.AddScoped<IStoreUserRepository, StoreUserRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
     }
 }

@@ -135,6 +135,60 @@ public static class InfrastructureModuleInitializerExtensions
                         210));
             }
 
+            if (!await context.StoreUsers.AnyAsync())
+            {
+                context.StoreUsers.AddRange(
+                    StoreUser.Create(
+                        "jane.customer@developerstore.local",
+                        "janecustomer",
+                        "Customer@123",
+                        "Jane",
+                        "Customer",
+                        "Sao Paulo",
+                        "Paulista Avenue",
+                        1000,
+                        "01310-100",
+                        "-23.561414",
+                        "-46.655881",
+                        "11988887777",
+                        UserStatus.Active,
+                        UserRole.Customer),
+                    StoreUser.Create(
+                        "mark.manager@developerstore.local",
+                        "markmanager",
+                        "Manager@123",
+                        "Mark",
+                        "Manager",
+                        "Rio de Janeiro",
+                        "Atlantica Avenue",
+                        500,
+                        "22021-001",
+                        "-22.971964",
+                        "-43.182543",
+                        "21977776666",
+                        UserStatus.Active,
+                        UserRole.Manager));
+            }
+
+            if (!await context.Carts.AnyAsync())
+            {
+                context.Carts.AddRange(
+                    Cart.Create(
+                        1,
+                        DateTime.UtcNow.AddDays(-1),
+                        [
+                            new CartItemInput(1, 2),
+                            new CartItemInput(2, 1)
+                        ]),
+                    Cart.Create(
+                        2,
+                        DateTime.UtcNow,
+                        [
+                            new CartItemInput(3, 1),
+                            new CartItemInput(4, 3)
+                        ]));
+            }
+
             if (!context.ChangeTracker.HasChanges())
             {
                 logger.LogInformation("Seed data skipped because the database already contains records.");

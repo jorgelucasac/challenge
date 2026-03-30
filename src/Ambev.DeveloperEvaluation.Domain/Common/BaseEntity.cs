@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Domain.Common;
 
-public class BaseEntity : IComparable<BaseEntity>
+public class BaseEntity : IComparable<BaseEntity>, IHasDomainEvents
 {
     private readonly List<INotification> _domainEvents = [];
 

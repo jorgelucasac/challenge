@@ -138,13 +138,15 @@ public class ProductRepository : IProductRepository
 
         foreach (var sortField in order)
         {
-            orderedQuery = ApplyOrdering(sortField, orderedQuery ?? query);
+            orderedQuery = orderedQuery == null
+                ? ApplyInitialOrdering(sortField, query)
+                : ApplySubsequentOrdering(sortField, orderedQuery);
         }
 
         return orderedQuery ?? query.OrderBy(product => product.Id);
     }
 
-    private static IOrderedQueryable<Product> ApplyOrdering(ProductSortField sortField, IQueryable<Product> query)
+    private static IOrderedQueryable<Product> ApplyInitialOrdering(ProductSortField sortField, IQueryable<Product> query)
     {
         return sortField.Field.ToLowerInvariant() switch
         {
@@ -157,6 +159,22 @@ public class ProductRepository : IProductRepository
             "rate" => sortField.Descending ? query.OrderByDescending(product => product.Rating.Rate) : query.OrderBy(product => product.Rating.Rate),
             "count" => sortField.Descending ? query.OrderByDescending(product => product.Rating.Count) : query.OrderBy(product => product.Rating.Count),
             _ => sortField.Descending ? query.OrderByDescending(product => product.Id) : query.OrderBy(product => product.Id)
+        };
+    }
+
+    private static IOrderedQueryable<Product> ApplySubsequentOrdering(ProductSortField sortField, IOrderedQueryable<Product> query)
+    {
+        return sortField.Field.ToLowerInvariant() switch
+        {
+            "id" => sortField.Descending ? query.ThenByDescending(product => product.Id) : query.ThenBy(product => product.Id),
+            "title" => sortField.Descending ? query.ThenByDescending(product => product.Title) : query.ThenBy(product => product.Title),
+            "price" => sortField.Descending ? query.ThenByDescending(product => product.Price) : query.ThenBy(product => product.Price),
+            "description" => sortField.Descending ? query.ThenByDescending(product => product.Description) : query.ThenBy(product => product.Description),
+            "category" => sortField.Descending ? query.ThenByDescending(product => product.Category) : query.ThenBy(product => product.Category),
+            "image" => sortField.Descending ? query.ThenByDescending(product => product.Image) : query.ThenBy(product => product.Image),
+            "rate" or "rating.rate" => sortField.Descending ? query.ThenByDescending(product => product.Rating.Rate) : query.ThenBy(product => product.Rating.Rate),
+            "count" or "rating.count" => sortField.Descending ? query.ThenByDescending(product => product.Rating.Count) : query.ThenBy(product => product.Rating.Count),
+            _ => sortField.Descending ? query.ThenByDescending(product => product.Id) : query.ThenBy(product => product.Id)
         };
     }
 

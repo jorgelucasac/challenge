@@ -5,14 +5,14 @@ namespace Ambev.DeveloperEvaluation.Domain.Events;
 
 public class ProductCreatedEvent : INotification
 {
-    public int ProductId { get; }
-    public string Title { get; }
-    public string Category { get; }
+    private readonly Product _product;
+
+    public int ProductId => _product.Id;
+    public string Title => _product.Title;
+    public string Category => _product.Category;
 
     public ProductCreatedEvent(Product product)
     {
-        ProductId = product.Id;
-        Title = product.Title;
-        Category = product.Category;
+        _product = product;
     }
 }
